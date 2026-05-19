@@ -1,0 +1,5 @@
+{
+  "name": "claude-chat",
+  "version": "0.1.0",
+  "description": "Cross-session chat for Claude Code. Register sessions, then /tell, /ask, and /check between them over a local Redis."
+}

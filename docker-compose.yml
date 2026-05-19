@@ -1,0 +1,8 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: agent-chat-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6380:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
