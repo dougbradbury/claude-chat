@@ -36,13 +36,14 @@ Messages travel through a small local Redis (Docker container, bound to `127.0.0
 
 ## Install (plugin)
 
-Install the plugin from this repo:
+This repo is its own Claude Code marketplace. In any Claude Code session, add the marketplace and install the plugin:
 
 ```
-/plugin install https://github.com/dougbradbury/claude-chat
+/plugin marketplace add https://github.com/dougbradbury/claude-chat
+/plugin install claude-chat@claude-chat
 ```
 
-Then install the Python dependencies and start Redis. From the plugin directory (`~/.claude/plugins/.../claude-chat` — the install command will print the path):
+Then install the Python dependencies and start Redis. From the plugin install directory (Claude Code will print the path after install — typically `~/.claude/plugins/marketplaces/claude-chat/`):
 
 ```
 pip install -r requirements.txt

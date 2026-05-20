@@ -1,0 +1,12 @@
+{
+  "name": "claude-chat",
+  "owner": {
+    "name": "Doug Bradbury"
+  },
+  "plugins": [
+    {
+      "name": "claude-chat",
+      "source": "./"
+    }
+  ]
+}
