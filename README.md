@@ -7,23 +7,25 @@ Two sessions exchanging notes:
 ```
 session A (in field_application)        session B (in core_services)
 ─────────────────────────────────       ───────────────────────────────────
-/ask core-services "What auth header
-does POST /v1/farmers expect?"
+/claude-chat:ask core-services "What
+auth header does POST /v1/farmers
+expect?"
   → waiting…
-                                        /check
+                                        /claude-chat:check
                                           → 1 question from field_application
                                           (Claude reads its repo, answers)
-                                        agent_chat.py answer …
   → "Bearer token, see auth.py:42"
 ```
 
 ## What it gives you
 
-- **`/ask <target> <question>`** — block until the other session answers.
-- **`/tell <target> <message>`** — fire-and-forget. Recipient sees it on next `/check`.
-- **`/check`** — drain inbox; answer pending questions, surface tells and any late answers.
-- **`/chat-register`**, **`/chat-list`**, **`/chat-unregister`** — manage the session directory.
-- A `SessionEnd` hook unregisters you when the session closes.
+Once installed, the commands are namespaced under `claude-chat:` — you can also call them by their short names if no other plugin clashes:
+
+- **`/claude-chat:ask <target> <question>`** — block until the other session answers.
+- **`/claude-chat:tell <target> <message>`** — fire-and-forget. Recipient sees it on next `check`.
+- **`/claude-chat:check`** — drain inbox; answer pending questions, surface tells and any late answers.
+- **`/claude-chat:chat-register`**, **`chat-list`**, **`chat-unregister`** — manage the session directory.
+- A `SessionEnd` hook unregisters you on real session exits — not on `/clear` or `/resume`, which keep your registration intact.
 
 Messages travel through a small local Redis (Docker container, bound to `127.0.0.1` only).
 
@@ -36,26 +38,30 @@ Messages travel through a small local Redis (Docker container, bound to `127.0.0
 
 ## Install (plugin)
 
-This repo is its own Claude Code marketplace. In any Claude Code session, add the marketplace and install the plugin:
+This repo is its own Claude Code marketplace. In any Claude Code session, add the marketplace, install the plugin, and reload:
 
 ```
 /plugin marketplace add https://github.com/dougbradbury/claude-chat
 /plugin install claude-chat@claude-chat
+/reload-plugins
 ```
 
-Then install the Python dependencies and start Redis. From the plugin install directory (Claude Code will print the path after install — typically `~/.claude/plugins/marketplaces/claude-chat/`):
+Install the Python dependencies and start Redis. Claude Code installs the plugin under `~/.claude/plugins/cache/claude-chat/claude-chat/<version>/`:
 
 ```
+cd ~/.claude/plugins/cache/claude-chat/claude-chat/*/
 pip install -r requirements.txt
 docker compose up -d
 ```
 
-Restart Claude Code so it picks up the new slash commands and `SessionEnd` hook, then in any session:
+Then in any session:
 
 ```
-/chat-register
-/chat-list
+/claude-chat:chat-register
+/claude-chat:chat-list
 ```
+
+The first session you register sees only itself. Open Claude Code in another repo, install the plugin there too, and they'll see each other.
 
 ## Install (manual, no plugin)
 
@@ -104,7 +110,7 @@ Add this to `~/.claude/settings.json` (merge with existing `hooks` if any):
 - `ask` then `BLPOP`s on a per-request reply slot at `agent:<asker>:replies:<request_id>` and waits indefinitely. The recipient's `answer` command pushes the reply into that slot.
 - If `ask` is interrupted (Esc), it leaves a pending entry in `agent:<asker>:pending`. A later `/check` drains any answers that arrived after the interrupt and surfaces them as `kind: late_answer`.
 - Identity is per-cwd: a local file in `~/.claude_chat/<cwd_slug>.json` records the name this session registered under. Different sessions in different project directories get separate identities automatically.
-- A `SessionEnd` hook reads the session's `cwd` from stdin and unregisters cleanly. Hard kills (`kill -9`, OS crash) won't fire the hook, so the registry may occasionally contain a dead session — `/chat-unregister` it manually, or restart the Redis container to reset.
+- A `SessionEnd` hook reads the session's `cwd` and `reason` from stdin and unregisters when the session actually exits. It deliberately skips `/clear` and `/resume` events (your terminal is still open, you just reset context). Hard kills (`kill -9`, OS crash) won't fire the hook either, so the registry may occasionally contain a dead session — `/claude-chat:chat-unregister` it manually, or restart the Redis container to reset.
 
 ## Safety
 
