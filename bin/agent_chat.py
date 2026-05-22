@@ -101,6 +101,15 @@ def register(name: str | None, description: str | None) -> None:
             )
             sys.exit(2)
 
+    # If this cwd was previously registered under a different name (e.g. user
+    # ran `register <custom-name>` last session, then auto-register on next
+    # startup picks a different inferred name), drop the stale Redis entry.
+    prior = _load_identity()
+    if prior and prior.get("name") and prior["name"] != name:
+        r.hdel(REGISTRY_KEY, prior["name"])
+        r.delete(REQUESTS_KEY.format(name=prior["name"]))
+        r.delete(PENDING_KEY.format(name=prior["name"]))
+
     entry = {
         "name": name,
         "description": description,

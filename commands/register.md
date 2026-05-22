@@ -19,4 +19,4 @@ Run:
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/agent_chat.py" register "<name>" "<description>"
 ```
 
-After registering, run `/chat-list` so the user sees who else is online.
+After registering, run `/chat:list` so the user sees who else is online.
