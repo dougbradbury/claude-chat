@@ -24,12 +24,24 @@ REPLY_TTL = 3600  # reply slot TTL — sized for late answers to long Q&A
 PENDING_TTL = 86400  # pending-ask metadata TTL — 24h is plenty for catch-up
 MAX_MSG_BYTES = 16 * 1024
 
-# Identity is stored per-cwd so each session in a different project has its own name.
+# Identity is stored per-session when CLAUDE_CODE_SESSION_ID is set (so multiple
+# sessions in the same repo can each have their own name, and cwd drift within a
+# session doesn't lose identity). Falls back to per-cwd for plain shell invocations.
 STATE_DIR = Path.home() / ".claude_chat"
 STATE_DIR.mkdir(exist_ok=True)
+SESSIONS_DIR = STATE_DIR / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
+
+
+def _session_id() -> str | None:
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    return sid or None
 
 
 def _state_file() -> Path:
+    sid = _session_id()
+    if sid:
+        return SESSIONS_DIR / f"{sid}.json"
     cwd_slug = str(Path.cwd()).replace("/", "_").lstrip("_")
     return STATE_DIR / f"{cwd_slug}.json"
 
@@ -84,8 +96,10 @@ def cli() -> None:
 def register(name: str | None, description: str | None) -> None:
     """Register this session. NAME defaults to the cwd basename; DESCRIPTION to a placeholder."""
     if not name:
-        name = Path.cwd().name or "agent"
-        name = name.replace(" ", "_")
+        base = Path.cwd().name or "agent"
+        base = base.replace(" ", "_")
+        sid = _session_id()
+        name = f"{base}-{sid[:8]}" if sid else base
     if not description:
         description = f"agent in {Path.cwd()}"
     r = _r()
