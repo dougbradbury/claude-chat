@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "claude-chat",
+      "name": "chat",
       "source": "./"
     }
   ]
