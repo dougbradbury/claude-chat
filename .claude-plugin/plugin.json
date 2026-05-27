@@ -1,5 +1,5 @@
 {
   "name": "chat",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cross-session chat for Claude Code. Register sessions, then /chat:tell, /chat:ask, and /chat:check between them over a local Redis."
 }
